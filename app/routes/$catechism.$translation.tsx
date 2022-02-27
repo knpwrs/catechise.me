@@ -1,12 +1,16 @@
-import { AppShell, Header, Select, SimpleGrid, Title } from '@mantine/core';
-import { useCallback } from 'react';
+import { AppShell, Button, Group, Header, Title } from '@mantine/core';
+import { ChangeEvent, useCallback } from 'react';
 import {
+  ActionFunction,
+  Form,
   LinksFunction,
   LoaderFunction,
+  redirect,
   useLoaderData,
   useNavigate,
 } from 'remix';
 import sanitize from 'sanitize.css';
+import { PortableSelect } from '~/components/portable-select';
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: sanitize },
@@ -28,19 +32,31 @@ export const loader: LoaderFunction = ({ params }): LoaderData => {
   return { catechism, translation };
 };
 
+export const action: ActionFunction = async ({ request }) => {
+  const data = await request.formData();
+  const catechism = data.get('catechism');
+  const translation = data.get('translation');
+
+  if (!catechism || !translation) {
+    return redirect('/');
+  }
+
+  return redirect(`/${catechism}/${translation}`);
+};
+
 export default () => {
   const data = useLoaderData<LoaderData>();
   const navigate = useNavigate();
 
   const onChangeCatechism = useCallback(
-    (value: string) => {
+    (value: string | ChangeEvent<HTMLSelectElement> | null) => {
       navigate(`/${value}/${data.translation}`);
     },
     [data.translation, navigate],
   );
 
   const onChangeTranslation = useCallback(
-    (value: string) => {
+    (value: string | ChangeEvent<HTMLSelectElement> | null) => {
       navigate(`/${data.catechism}/${value}`);
     },
     [data.catechism, navigate],
@@ -57,24 +73,31 @@ export default () => {
           sx={{ display: 'flex', justifyContent: 'space-between' }}
         >
           <Title order={1}>catechise.me</Title>
-          <SimpleGrid cols={2}>
-            <Select
-              value={data.catechism}
-              data={[
-                { label: "Keach's Catechism", value: 'keach' },
-                { label: "Spugeon's Catechism", value: 'spurgeon' },
-              ]}
-              onChange={onChangeCatechism}
-            />
-            <Select
-              value={data.translation}
-              data={[
-                { label: 'ESV', value: 'esv' },
-                { label: 'NASB', value: 'nasb' },
-              ]}
-              onChange={onChangeTranslation}
-            />
-          </SimpleGrid>
+          <Form method="post">
+            <Group spacing="xs">
+              <PortableSelect
+                name="catechism"
+                defaultValue={data.catechism}
+                data={[
+                  { label: "Keach's Catechism", value: 'keach' },
+                  { label: "Spugeon's Catechism", value: 'spurgeon' },
+                ]}
+                onChange={onChangeCatechism}
+              />
+              <PortableSelect
+                name="translation"
+                defaultValue={data.translation}
+                data={[
+                  { label: 'ESV', value: 'esv' },
+                  { label: 'NASB', value: 'nasb' },
+                ]}
+                onChange={onChangeTranslation}
+              />
+              <noscript>
+                <Button type="submit">Go</Button>
+              </noscript>
+            </Group>
+          </Form>
         </Header>
       }
     >
