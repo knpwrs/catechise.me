@@ -11,6 +11,7 @@ import {
 } from 'remix';
 import sanitize from 'sanitize.css';
 import { PortableSelect } from '~/components/portable-select';
+import * as cookies from '~/cookies';
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: sanitize },
@@ -21,7 +22,7 @@ interface LoaderData {
   translation: string;
 }
 
-export const loader: LoaderFunction = ({ params }): LoaderData => {
+export const loader: LoaderFunction = async ({ params }) => {
   const catechism = params['catechism'];
   const translation = params['translation'];
 
@@ -29,7 +30,18 @@ export const loader: LoaderFunction = ({ params }): LoaderData => {
     throw new Response('Not Found', { status: 404 });
   }
 
-  return { catechism, translation };
+  const body: LoaderData = { catechism, translation };
+
+  const headers = new Headers({ 'Content-Type': 'application/json' });
+  headers.append('Set-Cookie', await cookies.catechism.serialize(catechism));
+  headers.append(
+    'Set-Cookie',
+    await cookies.translation.serialize(translation),
+  );
+
+  return new Response(JSON.stringify(body), {
+    headers,
+  });
 };
 
 export const action: ActionFunction = async ({ request }) => {
