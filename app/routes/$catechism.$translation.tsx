@@ -91,7 +91,7 @@ export default () => {
                 name="catechism"
                 defaultValue={data.catechism}
                 data={[
-                  { label: "Keach's Catechism", value: 'keach' },
+                  { label: 'Baptist Catechism', value: 'baptist' },
                   { label: "Spugeon's Catechism", value: 'spurgeon' },
                 ]}
                 onChange={onChangeCatechism}
